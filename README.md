@@ -29,7 +29,7 @@ A menu-driven **Bakery Management System developed using the C programming langu
 
 Admin access is protected by a username and PIN, with a maximum of three login attempts.
 
-## Admin Portal Features
+#### Admin Portal Features
 
 | Section | Functions |
 |---|---|
