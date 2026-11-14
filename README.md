@@ -30,33 +30,17 @@ handling customer orders.
 Admin access is protected by a username and PIN. The program allows up
 to three login attempts.
 
-  -----------------------------------------------------------------------
-  Section                             Functions
-  ----------------------------------- -----------------------------------
-  Stock Management                    Display current stock, add stock,
-                                      record a sale, and check low-stock
-                                      items
+## Admin Portal Features
 
-  Expiry Management                   View expiry dates, check expired
-                                      products, and update expiry dates
-
-  Sales Report                        View initial stock, remaining
-                                      stock, quantity sold, revenue, and
-                                      grand total sales
-
-  Discount Management                 Set a discount percentage for a
-                                      product
-
-  Search and Sort                     Search products using linear search
-                                      or binary search
-
-  Order Management                    Add orders, view all orders, search
-                                      by customer name, update order
-                                      status, and cancel pending orders
-
-  Product Menu                        Display all products and their
-                                      prices
-  -----------------------------------------------------------------------
+| Section | Functions |
+|---|---|
+| **Stock Management** | Display current stock, add stock, record a sale, and check low-stock items. |
+| **Expiry Management** | View expiry dates, check expired products, and update expiry dates. |
+| **Sales Report** | View initial stock, remaining stock, quantity sold, revenue, and grand total sales. |
+| **Discount Management** | Set a discount percentage for a product. |
+| **Search and Sort** | Search products using linear search or binary search. |
+| **Order Management** | Add orders, view all orders, search by customer name, update order status, and cancel pending orders. |
+| **Product Menu** | Display all products and their prices. |
 
 ### Product List
 
