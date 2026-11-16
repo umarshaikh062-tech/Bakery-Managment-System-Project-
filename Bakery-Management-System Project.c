@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define ITEMS 10
 #define MAX_ORDERS 100
@@ -148,32 +149,54 @@ int customCakeFlavorFromOrderName(const char *name)
     return -1;
 }
 
+
 int configureCustomCake(char details[], int detailsSize, float *unitPrice, int *flavorIndex)
 {
     int flavorChoice, toppingChoice, sizeChoice;
-    char topping[30], size[20], message[51];
+    int result = 0;
+    int ch;
+    size_t messageCapacity = 10;
+    size_t messageLength = 0;
+    char topping[30], size[20];
+    char *message;
 
+    message = (char *)malloc(messageCapacity * sizeof(char));
+
+    if (message == NULL)
+        goto memory_error;
+
+    goto allocation_success;
+
+memory_error:
+    printf("Memory allocation failed!\n");
+    goto cleanup;
+
+allocation_success:
     printf("\n========== CUSTOM CAKE MENU ==========\n");
     printf("Available flavor stock:\n");
     for (int i = 0; i < 3; i++)
         printf("%d. %-20s Stock: %d\n", i + 1, customCakeFlavors[i], customCakeStock[i]);
+
     printf("Select Cake Flavor (1-3): ");
     if (scanf("%d", &flavorChoice) != 1)
     {
         printf("Invalid flavor choice!\n");
         clearInputBuffer();
-        return 0;
+        goto cleanup;
     }
+
     if (flavorChoice < 1 || flavorChoice > 3)
     {
         printf("Invalid flavor choice!\n");
-        return 0;
+        goto cleanup;
     }
+
     *flavorIndex = flavorChoice - 1;
+
     if (customCakeStock[*flavorIndex] <= 0)
     {
         printf("Sorry, this flavor is out of stock.\n");
-        return 0;
+        goto cleanup;
     }
 
     printf("\nSelect Topping:\n1. Choco Chips\n2. Cherries\n3. Nuts\n4. No Topping\nEnter choice: ");
@@ -181,8 +204,9 @@ int configureCustomCake(char details[], int detailsSize, float *unitPrice, int *
     {
         printf("Invalid topping choice!\n");
         clearInputBuffer();
-        return 0;
+        goto cleanup;
     }
+
     switch (toppingChoice)
     {
     case 1:
@@ -199,7 +223,7 @@ int configureCustomCake(char details[], int detailsSize, float *unitPrice, int *
         break;
     default:
         printf("Invalid topping choice!\n");
-        return 0;
+        goto cleanup;
     }
 
     printf("\nSelect Cake Size:\n1. Small - Rs. 1000\n2. Medium - Rs. 1500\n3. Large - Rs. 2000\nEnter choice: ");
@@ -207,8 +231,9 @@ int configureCustomCake(char details[], int detailsSize, float *unitPrice, int *
     {
         printf("Invalid size choice!\n");
         clearInputBuffer();
-        return 0;
+        goto cleanup;
     }
+
     switch (sizeChoice)
     {
     case 1:
@@ -225,22 +250,88 @@ int configureCustomCake(char details[], int detailsSize, float *unitPrice, int *
         break;
     default:
         printf("Invalid size choice!\n");
-        return 0;
+        goto cleanup;
     }
 
     printf("Enter custom message for cake (maximum 50 characters): ");
-    if (scanf(" %50[^\n]", message) != 1)
-        strcpy(message, "No message");
+
+    /* Skip leading whitespace, as the original scanf format did. */
+    ch = getchar();
+    while (ch != EOF && (ch == ' ' || ch == '\t' || ch == '\n' ||
+                         ch == '\r' || ch == '\v' || ch == '\f'))
+        ch = getchar();
+
+    if (ch == EOF)
+    {
+        const char defaultMessage[] = "No message";
+        char *resizedMessage = (char *)realloc(message, sizeof(defaultMessage));
+
+        if (resizedMessage == NULL)
+            goto memory_error;
+
+        message = resizedMessage;
+        memcpy(message, defaultMessage, sizeof(defaultMessage));
+        messageLength = sizeof(defaultMessage) - 1;
+        messageCapacity = sizeof(defaultMessage);
+    }
+    else
+    {
+        /* Expand the message allocation only when the entered text needs more room. */
+        while (ch != '\n' && ch != EOF && messageLength < 50)
+        {
+            if (messageLength + 1 >= messageCapacity)
+            {
+                size_t newCapacity = messageCapacity * 2;
+                char *resizedMessage;
+
+                if (newCapacity > 51)
+                    newCapacity = 51;
+
+                resizedMessage = (char *)realloc(message, newCapacity * sizeof(char));
+                if (resizedMessage == NULL)
+                    goto memory_error;
+
+                message = resizedMessage;
+                messageCapacity = newCapacity;
+            }
+
+            message[messageLength++] = (char)ch;
+
+            /* Do not consume characters beyond the existing 50-character input limit. */
+            if (messageLength < 50)
+                ch = getchar();
+        }
+
+        message[messageLength] = '\0';
+    }
+
+    /* Reduce unused capacity to the actual message size when possible. */
+    if (messageLength + 1 < messageCapacity)
+    {
+        char *resizedMessage = (char *)realloc(message, (messageLength + 1) * sizeof(char));
+        if (resizedMessage != NULL)
+            message = resizedMessage;
+    }
+
     for (int i = 0; message[i] != '\0'; i++)
         if (message[i] == '|')
             message[i] = '/';
 
-    snprintf(details, detailsSize, "Custom Cake [%s; %s; %s; Message: %s]",
+    snprintf(details, detailsSize,
+             "Custom Cake [%s; %s; %s; Message: %s]",
              customCakeFlavors[*flavorIndex], topping, size, message);
-    printf("\nCUSTOM CAKE DETAILS\nFlavor: %s\nTopping: %s\nSize: %s\nMessage: %s\nPrice: Rs. %.2f\n",
-           customCakeFlavors[*flavorIndex], topping, size, message, *unitPrice);
-    return 1;
+
+    printf("\n%s\n", details);
+
+    result = 1;
+
+cleanup:
+
+    free(message);
+
+    return result;
 }
+
 
 void reduceItemStock(int itemIndex, const char *storedName, int quantity)
 {
@@ -796,7 +887,7 @@ void viewSalesReport(void)
     {
         printf("%-38s %10d %10d %8d Rs. %10.2f\n", itemNames[i], initialStock[i], currentStock[i], quantitySold[i], totalSales[i]);
         grandTotal += totalSales[i];
-   }
+    }
     printf("-------------------------------------------------------------------------------\n%-65s Rs. %10.2f\n", "Grand Total Sales:", grandTotal);
     printf("===============================================================================\n");
 }
@@ -1792,7 +1883,6 @@ void cancelCustomerOrder(void)
             if (confirm == 'Y' || confirm == 'y')
             {
 
-
                 FILE *fp = fopen("orders.txt", "r");
                 FILE *temp = fopen("temp.txt", "w");
 
@@ -1846,7 +1936,6 @@ void cancelCustomerOrder(void)
                     printf("\nCould not update order file!");
                     return;
                 }
-
 
                 int itemIndex = findOrderProductIndex(customerOrders[i].itemName);
                 if (itemIndex >= 0)
